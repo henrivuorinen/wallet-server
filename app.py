@@ -2,10 +2,8 @@ import flask
 from flask import request, jsonify
 import sqlite3
 from datetime import datetime
-import json
 
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
 
 def dict_factory(cursor, row):
     d = {}
@@ -14,9 +12,42 @@ def dict_factory(cursor, row):
     return d
 
 def connect_to_db():
-    con = sqlite3.connect('example.sqlite', isolation_level='IMMEDIATE')
+    db_file = app.config.get("DB_FILE", "example.sqlite")
+    con = sqlite3.connect(db_file, isolation_level='IMMEDIATE')
     con.row_factory = dict_factory
     return con
+
+def create_tables():
+    con = connect_to_db()
+    cur = con.cursor()
+
+    cur.execute('''
+    create table if not exists UserData
+(
+    Userid         INTEGER
+        primary key,
+    Name           TEXT,
+    Accountbalance DOUBLE
+);''')
+    cur.execute('''   create table if not exists EventLog
+(
+    User      INTEGER
+        references UserData (UserId),
+    EventId   INTEGER
+        primary key,
+    Timestamp DATETIME,
+    Type      TEXT,
+    Amount    DOUBLE
+);''')
+    con.commit()
+    con.close()
+
+def create_dummy_data():
+    con = connect_to_db()
+    cur = con.cursor()
+    cur.execute('INSERT INTO UserData(Userid, Name, AccountBalance) VALUES(12345, "Johnny Boy", 100);')
+    con.commit()
+    con.close()
 
 def format_error(error, code):
     return jsonify({"success": False, "error": error}), code
@@ -48,6 +79,8 @@ def api_charge():
     con = connect_to_db()
     cur = con.cursor()
     query_result = cur.execute('SELECT Accountbalance FROM UserData WHERE Userid = ?;', [userId]).fetchone()
+    if not query_result:
+        return format_error("user not found", 404)
     Accountbalance = query_result['Accountbalance']
 
     existing_event = cur.execute('SELECT Amount, User FROM EventLog WHERE EventId = ?;', [eventId]).fetchone()
@@ -94,6 +127,8 @@ def api_win():
     con = connect_to_db()
     cur = con.cursor()
     user_data = cur.execute('SELECT UserId, AccountBalance FROM UserData WHERE UserId = ?;', [userId]).fetchone()
+    if not user_data:
+        format_error("Userdata not found", 404)
 
     Accountbalance = user_data['Accountbalance']
 
@@ -126,7 +161,9 @@ def api_win():
     return jsonify(results)
 
 
-app.run()
+if __name__ == "__main__":
+    create_tables()
+    app.run()
 
 
 

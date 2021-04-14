@@ -137,4 +137,18 @@ When a new user is created a unique id is created to match a users wallet.
 
 # Database transactions
 
-I use isolation_level = 'IMMEADIATE' so that every database read and write within an api call is done in the same transaction. This guarantees data-integrity. So that lose threads do not read the Accountbalance simultaneously and end up writing based on stale data. Currently the API will result an uncaught error if this happens.   
+I use isolation_level = 'IMMEDIATE' so that every database read and write within an api call is done in the same transaction. This guarantees data-integrity. So that lose threads do not read the Accountbalance simultaneously and end up writing based on stale data. Currently the API will result an uncaught error if this happens.  
+
+# Tests
+
+To run the tests you need to install pytest
+
+`pip install pytest`
+
+To run the tests, navigate into main directory and type
+
+`pytest -v`
+
+This will execute all the tests and prints the results. 
+
+Tests are located in test_.py file. Not all possible cases are present, that needs some further development. 
