@@ -21,6 +21,10 @@ def connect_to_db():
 def format_error(error, code):
     return jsonify({"success": False, "error": error}), code
 
+@app.route('/api/v1/healthcheck', methods=['GET'])
+def api_healthcheck():
+    return jsonify({"success": True, "message": "System is up and running"})
+
 
 @app.route('/api/v1/charge', methods=['POST'])
 def api_charge():
@@ -91,11 +95,17 @@ def api_win():
     cur = con.cursor()
     user_data = cur.execute('SELECT UserId, AccountBalance FROM UserData WHERE UserId = ?;', [userId]).fetchone()
 
-    if not user_data:
-        return format_error("Unknown user", 400)
-
     Accountbalance = user_data['Accountbalance']
 
+    existing_event = cur.execute('SELECT Amount, User FROM EventLog WHERE EventId = ?;', [win]).fetchone()
+
+    if existing_event:
+        if amount == existing_event['Amount'] and userId == existing_event['User']:
+            return {"success": True, "UserId": userId, "AccountBalance": Accountbalance}
+        else:
+            return format_error("Request has a conflict with existing data.", 409)
+    if not user_data:
+        return format_error("Unknown user", 400)
     if amount < 0:
         return format_error("Winning amount is negative", 400)
 

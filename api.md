@@ -14,6 +14,20 @@ This will make the client to run in `localhost:5000` and it is accessible there.
 
 ## Requests
 
+### Healthcheck
+
+`GET api/v1/healthcheck`
+
+If system is up it will send a following a payload
+
+```json
+{  
+   "success": true, 
+   "message": "System is up and running"
+}
+```
+
+
 ### When a game is charged
 ```POST /api/v1/charge```
 
@@ -83,11 +97,11 @@ Response payload
 }
 ```
 
-The client is allowed to repeat a request with same UserId and Amount. If the client sends a request with a repeated UserId and amount but with a different WinningEventId it will result `HTTP 409` with following payload
+The client is allowed to repeat a request with same UserId and WinningEventId. If the client receives a request with a repeated UserId and WinningEventId but with a different Amount it will result `HTTP 409` with following payload
 ```json
 {
    "success": false,
-   "error": "Request has a conflict with existing data. Duplicate winningEventId"
+   "error": "Request has a conflict with existing data."
 }
 ```
 
